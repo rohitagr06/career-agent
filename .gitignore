@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# caches
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+data/indexes/faiss.index
+data/processed/chunks.pkl
+data/processed/metadata.pkl
+Readme_ori.md
+*.pdf
+data/summary.txt
+
+# local binaries
+*.so
+*.dylib
+
+# env
+.env
+
+# logs
+*.log
