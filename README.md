@@ -63,6 +63,7 @@ How can I get in touch with you?
 | **"Tell me about your backend engineering experience."** | "I have experience building backend systems and microservices using Python, REST APIs, PostgreSQL, and cloud-native infrastructure. My work has focused on scalable data-driven applications, analytics systems, and distributed services running on AWS and Kubernetes." |
 | **"Kafka?"** | "I don't have confirmed hands-on Kafka experience mentioned in my documented background. My backend work has primarily focused on Python microservices, REST APIs, PostgreSQL, Kubernetes, and cloud deployments on AWS." |
 | **"Share your phone number."** | "I prefer professional communication through email or LinkedIn." |
+| **"How do you approach backend system design?"** | "I usually focus on modular service boundaries, database efficiency, observability, and scalability from the beginning. In my recent work, I’ve primarily built Python-based backend services with REST APIs, PostgreSQL, and cloud-native deployments on AWS and Kubernetes." |
 
 ---
 
@@ -96,7 +97,17 @@ All user input passes through a validation gate checking for:
 * Malicious prompt injection attempts (e.g., "ignore previous instructions").
 
 ### ☁️ Lightweight Deployment
-Optimized for **CPU-only** deployment on Hugging Face Spaces, eliminating the need for expensive GPU infrastructure while maintaining sub-second response times.
+Optimized for **CPU-only** deployment on Hugging Face Spaces, eliminating the need for expensive GPU infrastructure while maintaining lightweight and responsive inference.
+
+---
+
+## Known Limitations
+
+* Responses are intentionally restricted to uploaded professional documents.
+* The assistant avoids speculative or unverified answers.
+* Free-tier Hugging Face Spaces may experience occasional cold starts.
+* Real-time internet search is disabled to preserve factual grounding.
+* The system is optimized for recruiter-style conversations rather than general-purpose chat.
 
 ---
 
@@ -118,7 +129,7 @@ Recruiter Query
       ▼
 ┌─────────────────────┐
 │   RAG Retriever     │  ← semantic search, keyword search, 
-│   (Hybrid Search)   │    FAISS vector DB, chunk retrieval 
+│ Hybrid RAG Search   │    FAISS vector DB, chunk retrieval 
 └─────────────────────┘
       │
       ▼
@@ -161,26 +172,26 @@ Recruiter Query
 Every answer is drawn strictly from Rohit's professional documents. The RAG pipeline retrieves only the most relevant passages for each question — preventing hallucinations and keeping conversations factual.
 
 ### Hybrid RAG Pipeline
-The retrieval pipeline combines multiple retrieval strategies to improve recruiter-style question answering accuracy.
+The retrieval layer is optimized specifically for recruiter-style conversations, where queries are often extremely short, context-poor, and technology-focused.
 
-The system uses:
+Instead of relying on a single retrieval strategy, the pipeline combines:
 
-* semantic vector retrieval using Sentence Transformers
+* semantic retrieval using Sentence Transformer embeddings
 * FAISS vector similarity search
 * keyword-based retrieval
-* cross-encoder reranking
+* cross-encoder reranking for relevance scoring
 
-This hybrid retrieval approach improves grounding quality for short recruiter questions such as:
+This layered retrieval approach improves answer grounding for questions such as:
 
 * "Kafka?"
 * "Testing?"
 * "Architecture?"
 * "AWS?"
 
-Only the highest-ranked contextual chunks are injected into the prompt, reducing hallucinations and improving response precision.
+After retrieval and reranking, only the most relevant chunks are injected into the final prompt. This reduces hallucinations, improves factual consistency, and keeps responses aligned with the underlying professional documents.
 
 ### Multi-Model Fallback Routing
-GitHub Models (GPT-4.1-mini) serves as the primary inference provider. If it hits a rate limit or error, the router automatically retries with exponential backoff, then switches to Google Gemini Flash. If both fail, a polite static message is returned. The app never crashes on a recruiter's screen.
+GitHub Models (GPT-4.1-mini) serves as the primary inference provider. If it hits a rate limit or error, the router automatically retries with exponential backoff, then switches to Google Gemini Flash. If both fail, a polite static message is returned. This prevents failed recruiter sessions during provider outages or rate limits.
 
 ### Structured Output via Pydantic
 The agent returns a typed `AgentResponse` object (not a raw string), with fields for the answer text, detected topic, confidence level, suggested follow-up questions, and lead capture metadata. This enables richer UI rendering and reliable tool triggering.
@@ -196,6 +207,21 @@ All tuneable parameters (history limit, chunk size, retry counts, model names, t
 
 ---
 
+## Engineering Focus Areas
+
+* Backend Engineering
+* Retrieval-Augmented Generation (RAG)
+* AI Career Agents
+* Microservices & APIs
+* LLM Routing & Fallback Systems
+* Prompt Safety & Guardrails
+* Semantic Search & Reranking
+* Conversation Memory Systems
+* Cloud-Native Deployment
+* Recruiter-Focused AI UX
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -205,8 +231,8 @@ All tuneable parameters (history limit, chunk size, retry counts, model names, t
 | **LLM (fallback)** | Google Gemini 2.5 Flash (free) |
 | **LLM SDK** | OpenAI Python SDK (OpenAI-compatible interface) |
 | **RAG** | FAISS, Sentence Transformers, Hybrid Retrieval |
-| **Structured output** | Pydantic v2 |
-| **Validation** | Custom input validator |
+| **Structured Response** | Pydantic validation |
+| **Validation** | schema-safe output |
 | **Notifications** | Pushover API |
 | **Deployment** | Hugging Face Spaces |
 | **Language** | Python 3.11+ |
@@ -407,23 +433,32 @@ python -m pytest tests/test_agent.py -v
 **Why `core/` instead of `agent/`?**
 The `openai-agents` and `agents` libraries both use `agent` as a namespace. Naming the package `core/` avoids import collisions entirely.
 
-**Why TF-IDF instead of FAISS or embeddings?**
-Recruiter questions are often short and ambiguous:
+**Why Hybrid Retrieval instead of Pure Semantic Search?**
+Recruiter conversations behave very differently from traditional search queries.
 
+Questions are often:
+
+* extremely short
+* ambiguous
+* acronym-heavy
+* technology-specific
+
+Examples:
 * “Kafka?”
 * “Testing?”
 * “Architecture?”
 * “AWS?”
-Pure keyword search can miss contextual meaning, while pure semantic retrieval may lose exact technical matches.
 
-The system combines:
+Pure semantic retrieval can miss exact technical matches, while pure keyword search struggles with contextual understanding.
 
-* semantic retrieval using sentence-transformer embeddings
-* FAISS vector similarity search
-* keyword-based retrieval
-* reranking using cross-encoder scoring
+To improve retrieval quality, the system combines:
 
-This hybrid approach improves retrieval quality for recruiter-style conversations while remaining lightweight enough for Hugging Face Spaces deployment.
+* semantic embedding search for contextual similarity
+* FAISS vector retrieval for fast nearest-neighbour lookup
+* keyword retrieval for exact technology matching
+* cross-encoder reranking for final relevance scoring
+
+This hybrid architecture improves retrieval precision while remaining lightweight enough for CPU-only deployment on Hugging Face Spaces.
 
 **Why keep Hugging Face instead of Render or Railway?**
 HF Spaces provides a stable, recognisable public URL that recruiters trust. Cold starts are ~30 seconds — acceptable for someone who clicked a link intentionally from a resume or LinkedIn profile.
