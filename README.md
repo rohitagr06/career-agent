@@ -161,7 +161,23 @@ Recruiter Query
 Every answer is drawn strictly from Rohit's professional documents. The RAG pipeline retrieves only the most relevant passages for each question — preventing hallucinations and keeping conversations factual.
 
 ### Hybrid RAG Pipeline
-Combines TF-IDF keyword retrieval with semantic chunking. The retriever splits documents into overlapping 300-word chunks, builds a TF-IDF index, and fetches the top-4 most relevant passages per query. Only those passages — not the full document — are sent to the model.
+The retrieval pipeline combines multiple retrieval strategies to improve recruiter-style question answering accuracy.
+
+The system uses:
+
+* semantic vector retrieval using Sentence Transformers
+* FAISS vector similarity search
+* keyword-based retrieval
+* cross-encoder reranking
+
+This hybrid retrieval approach improves grounding quality for short recruiter questions such as:
+
+* "Kafka?"
+* "Testing?"
+* "Architecture?"
+* "AWS?"
+
+Only the highest-ranked contextual chunks are injected into the prompt, reducing hallucinations and improving response precision.
 
 ### Multi-Model Fallback Routing
 GitHub Models (GPT-4.1-mini) serves as the primary inference provider. If it hits a rate limit or error, the router automatically retries with exponential backoff, then switches to Google Gemini Flash. If both fail, a polite static message is returned. The app never crashes on a recruiter's screen.
@@ -188,7 +204,7 @@ All tuneable parameters (history limit, chunk size, retry counts, model names, t
 | **LLM (primary)** | GitHub Models — GPT-4.1-mini (free) |
 | **LLM (fallback)** | Google Gemini 2.5 Flash (free) |
 | **LLM SDK** | OpenAI Python SDK (OpenAI-compatible interface) |
-| **RAG** | TF-IDF via scikit-learn, pypdf |
+| **RAG** | FAISS, Sentence Transformers, Hybrid Retrieval |
 | **Structured output** | Pydantic v2 |
 | **Validation** | Custom input validator |
 | **Notifications** | Pushover API |
@@ -341,7 +357,7 @@ Open your browser at: `http://127.0.0.1:7860`
 
 ## Configuration
 
-All settings are in `core/config.py`. You never need to grep through multiple files to find a value.
+All application settings and environment configuration are centralized in `config/settings.py` for easier maintainability and deployment management.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
