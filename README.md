@@ -1,6 +1,5 @@
 ---
 title: Virtual Rohit — AI Career Conversation Agent
-emoji: 🤖
 colorFrom: indigo
 colorTo: teal
 sdk: gradio
@@ -11,10 +10,10 @@ license: mit
 
 <div align="center">
 
-# 🤖 Virtual Rohit
+# Virtual Rohit AI
 ### AI-Powered Career Conversation Agent
 
-*Ask me anything about Rohit's engineering background, skills, and experience.*
+*AI-powered recruiter assistant for exploring Rohit Agrawal’s engineering experience, projects, and technical expertise.*
 
 [![Hugging Face](https://img.shields.io/badge/🤗%20Hugging%20Face-Live%20Demo-yellow?style=for-the-badge)](https://huggingface.co/spaces/manuagr03/career-agent)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/rohitagr06/career-agent)
@@ -57,6 +56,50 @@ How can I get in touch with you?
 
 ---
 
+## Sample Conversation
+
+| User Query | Assistant Response |
+|------------|--------------------|
+| **"Tell me about your backend engineering experience."** | "I have experience building backend systems and microservices using Python, REST APIs, PostgreSQL, and cloud-native infrastructure. My work has focused on scalable data-driven applications, analytics systems, and distributed services running on AWS and Kubernetes." |
+| **"Kafka?"** | "I don't have confirmed hands-on Kafka experience mentioned in my documented background. My backend work has primarily focused on Python microservices, REST APIs, PostgreSQL, Kubernetes, and cloud deployments on AWS." |
+| **"Share your phone number."** | "I prefer professional communication through email or LinkedIn." |
+
+---
+
+## Production Features
+
+### 🛡️ Recruiter-Safe Guardrails
+The assistant is designed with professional safety in mind:
+* **Avoids Hallucination:** Prevents the generation of experience not found in provided documents.
+* **Instruction Protection:** Blocks attempts to disclose hidden system prompts.
+* **Privacy First:** Never exposes phone numbers; only shares approved professional contact details.
+
+### 🏗️ Modular RAG Architecture
+The system is decoupled into independent modules (Retrieval, Reranking, Embeddings, Routing, Memory, and Validation), ensuring high extensibility and easier unit testing.
+
+### ⚡ Persistent FAISS Index
+Embeddings are generated offline and stored in a persistent FAISS index. This ensures the application starts instantly on Hugging Face Spaces without needing to rebuild vectors from scratch.
+
+### 🔄 Multi-Model Resilience
+Uses a robust failover strategy:
+1. **Primary:** GitHub Models (GPT-4o-mini).
+2. **Secondary (Fallback):** Google Gemini Flash.
+3. **Tertiary:** Polite static failure message.
+
+### 📈 Retry Handling with Exponential Backoff
+The model router automatically handles transient API failures (like rate limits) using exponential backoff before attempting a switch to the fallback provider.
+
+### 📋 Structured Validation Layer
+All user input passes through a validation gate checking for:
+* Empty or nonsense input.
+* Excessive character length.
+* Malicious prompt injection attempts (e.g., "ignore previous instructions").
+
+### ☁️ Lightweight Deployment
+Optimized for **CPU-only** deployment on Hugging Face Spaces, eliminating the need for expensive GPU infrastructure while maintaining sub-second response times.
+
+---
+
 ## Architecture
 
 ```
@@ -64,18 +107,29 @@ Recruiter Query
       │
       ▼
 ┌─────────────────────┐
-│   Input Validator   │  ← length check, injection guard, empty check
+│   Input Validator   │  ← empty check, length validation, prompt injection
+└─────────────────────┘
+        │
+        ▼
+┌─────────────────────┐
+│ Conversation Memory │  ← recruiter context, follow-up support, multi-turn state   
 └─────────────────────┘
       │
       ▼
 ┌─────────────────────┐
-│   RAG Retriever     │  ← TF-IDF over chunked PDF + summary
-│   (Hybrid Search)   │    semantic + keyword, top-4 chunks
+│   RAG Retriever     │  ← semantic search, keyword search, 
+│   (Hybrid Search)   │    FAISS vector DB, chunk retrieval 
 └─────────────────────┘
       │
       ▼
 ┌─────────────────────┐
-│   Prompt Builder    │  ← persona + retrieved context only (not full PDF)
+│   Cross-Encoder     │  ← relevance scoring, top-k reranking 
+│   Reranker          │    
+└─────────────────────┘
+      │
+      ▼
+┌─────────────────────┐
+│   Prompt Builder    │  ← system prompt, retrieved context, grounded answers
 └─────────────────────┘
       │
       ▼
@@ -87,25 +141,16 @@ Recruiter Query
       │
       ▼
 ┌─────────────────────┐
-│  Structured Output  │  ← Pydantic AgentResponse schema
-│  (AgentResponse)    │    answer · confidence · suggested questions
+│  Structured Output  │  ← formatted answer
+│  (AgentResponse)    │    · recruiter-safe · grounded output
 └─────────────────────┘
       │
       ▼
 ┌─────────────────────┐
-│  Tool Handler       │  ← record_user_details (lead capture)
-│                     │    record_unknown_question (gap logging)
+│  Gradio UI          │  ← recruiter chat 
+│                     │  ← conversation UX 
+│                     │  ← follow-up flow
 └─────────────────────┘
-      │
-      ▼
-┌─────────────────────┐
-│  Conversation       │  ← trims to last N turns (configurable)
-│  History Manager    │
-└─────────────────────┘
-      │
-      ▼
-   Gradio UI
-   (answer + clickable follow-up question chips)
 ```
 
 ---
@@ -157,31 +202,85 @@ All tuneable parameters (history limit, chunk size, retry counts, model names, t
 ```
 career-agent/
 │
-├── app.py                   # Entry point — Gradio UI, wires all components
-├── pyproject.toml           # Project metadata and dependencies
-├── README.md                # This file
-├── .env.example             # Template for required environment variables
+├── app.py                          # Application entry point
+├── README.md                       # Project documentation
+├── requirements.txt               # Python dependencies
+├── pyproject.toml                 # Project configuration
+├── uv.lock                        # Locked dependency versions
+├── .env.example                   # Environment variable template
+├── .gitignore
+├── .hfignore
 │
-├── core/                    # All business logic (no name collision with agent libs)
-│   ├── __init__.py          # Exports CareerAgent
-│   ├── config.py            # ★ All tuneable settings in one place
-│   ├── schemas.py           # Pydantic models: AgentResponse, CitedFact, LeadCapture, etc.
-│   ├── agent.py             # CareerAgent class — orchestrates all components
-│   ├── retriever.py         # KnowledgeRetriever — chunking, TF-IDF index, retrieve()
-│   ├── models.py            # GitHub + Gemini clients, model_router() with retry logic
-│   ├── prompt.py            # build_system_prompt() — persona + retrieved context
-│   ├── tools.py             # Tool schemas, Pushover functions, handle_tool_calls()
-│   ├── validator.py         # validate_input() — length, injection, empty guard
-│   └── history.py           # ConversationHistory — trim to config.MAX_HISTORY_TURNS
+├── config/                        # Centralized configuration
+│   ├── logging_config.py          # Logging setup
+│   └── settings.py                # Environment settings and secrets
 │
-├── data/                    # Knowledge base (source of truth)
-│   ├── linkedin.pdf         # LinkedIn profile export
-│   └── summary.txt          # Personal and professional summary
+├── core/                          # Core application utilities
+│   ├── formatter.py               # Response formatting
+│   ├── grounding.py               # Grounded response helpers
+│   ├── history.py                 # Conversation memory handling
+│   ├── models.py                  # LLM model definitions
+│   ├── observability.py           # Logging and tracing helpers
+│   ├── retry.py                   # Retry and backoff logic
+│   ├── router.py                  # Primary/fallback model routing
+│   ├── schemas.py                 # Pydantic response schemas
+│   └── validator.py               # Input validation and safety checks
 │
-└── tests/                   # Test suite
-    ├── test_agent.py        # 20+ recruiter question scenarios + edge cases
-    ├── test_retriever.py    # Unit tests: chunking accuracy, retrieval relevance
-    └── test_validator.py    # Unit tests: injection, length, empty, clean input
+├── pipeline/                      # Main orchestration pipeline
+│   ├── career_pipeline.py         # End-to-end recruiter pipeline
+│   ├── instructions.py            # System instructions
+│   ├── memory.py                  # Conversation state manager
+│   ├── runner.py                  # Pipeline execution flow
+│   └── tools.py                   # Tool integrations and handlers
+│
+├── rag/                           # Retrieval-Augmented Generation system
+│   ├── chunker.py                 # Document chunking
+│   ├── embeddings.py              # Embedding generation
+│   ├── faiss_store.py             # FAISS persistence layer
+│   ├── indexing.py                # Index management
+│   ├── ingest.py                  # Knowledge ingestion pipeline
+│   ├── keyword_search.py          # Keyword retrieval
+│   ├── metadata.py                # Chunk metadata handling
+│   ├── pdf_loader.py              # Resume/document loading
+│   ├── reranker.py                # Cross-encoder reranking
+│   ├── retriever.py               # Hybrid retrieval orchestration
+│   ├── semantic_search.py         # Semantic vector search
+│   ├── storage.py                 # Index storage utilities
+│   └── vector_store.py            # Vector database abstraction
+│
+├── prompts/                       # Prompt templates
+│   ├── fallback_prompt.txt
+│   ├── summarization_prompt.txt
+│   ├── system_prompt.txt
+│   └── validation_prompt.txt
+│
+├── scripts/                       # Utility and maintenance scripts
+│   ├── build_index.py             # Build FAISS vector index
+│   ├── evaluate.py                # Evaluation utilities
+│   └── rebuild_embeddings.py      # Recreate embeddings/index
+│
+├── ui/                            # Gradio frontend components
+│   ├── components.py              # Shared UI components
+│   ├── gradio_ui.py               # Main Gradio interface
+│   ├── landing_page.py            # Landing page content
+│   └── themes.py                  # UI themes and styling
+│
+├── tests/                         # Test suite
+│   ├── recruiter_questions.py     # Recruiter-style QA tests
+│   ├── test_memory.py
+│   ├── test_models.py
+│   ├── test_retrieval.py
+│   └── test_validator.py
+│
+├── notebooks/                     # Experiments and prompt testing
+│   ├── prompt_testing.ipynb
+│   └── rag_experiments.ipynb
+│
+└── data/                          # Knowledge base and indexes
+    ├── linkedin.pdf               # LinkedIn profile export
+    ├── summary.txt                # Professional summary
+    └── indexes/
+        └── faiss.index            # Persistent FAISS vector index
 ```
 
 ---
@@ -270,8 +369,7 @@ This project is designed for zero-config deployment on Hugging Face Spaces.
 3. Add each of the four keys from `.env.example` as Repository Secrets
 4. The Space will build automatically from `app.py`
 
-No Docker, no build scripts, no paid infrastructure required.
-
+Designed for lightweight deployment on Hugging Face Spaces with minimal operational overhead.
 ---
 
 ## Running Tests
@@ -294,7 +392,22 @@ python -m pytest tests/test_agent.py -v
 The `openai-agents` and `agents` libraries both use `agent` as a namespace. Naming the package `core/` avoids import collisions entirely.
 
 **Why TF-IDF instead of FAISS or embeddings?**
-For a 4-page LinkedIn PDF and a short summary file (~25 chunks total), TF-IDF retrieval is fast, accurate, and requires zero API calls or GPU resources. Embeddings become worthwhile when the knowledge base grows beyond 50+ documents.
+Recruiter questions are often short and ambiguous:
+
+* “Kafka?”
+* “Testing?”
+* “Architecture?”
+* “AWS?”
+Pure keyword search can miss contextual meaning, while pure semantic retrieval may lose exact technical matches.
+
+The system combines:
+
+* semantic retrieval using sentence-transformer embeddings
+* FAISS vector similarity search
+* keyword-based retrieval
+* reranking using cross-encoder scoring
+
+This hybrid approach improves retrieval quality for recruiter-style conversations while remaining lightweight enough for Hugging Face Spaces deployment.
 
 **Why keep Hugging Face instead of Render or Railway?**
 HF Spaces provides a stable, recognisable public URL that recruiters trust. Cold starts are ~30 seconds — acceptable for someone who clicked a link intentionally from a resume or LinkedIn profile.
