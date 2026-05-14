@@ -36,6 +36,9 @@ jobs:
           
           exit ${EXIT_CODE:-0}
 
+      - name: Run tests with coverage
+        run: uv run pytest --cov --cov-fail-under=80
+      
       - name: Check formatting
         run: uv run black --check .
 
