@@ -4,7 +4,6 @@ import pickle
 import faiss
 from config.logging_config import logger
 
-
 # =====================================
 # Paths
 # =====================================

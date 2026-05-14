@@ -14,7 +14,6 @@ from rag.embeddings import generate_document_embeddings
 from rag.faiss_store import FAISSStore
 from rag.pdf_loader import load_knowledge_base
 
-
 # =====================================
 # Safe Contact Chunk
 # =====================================

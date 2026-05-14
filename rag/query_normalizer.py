@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 
-
 TECH_ALIASES = {
     "k8s": "kubernetes container orchestration",
     "kubernetes": "kubernetes k8s container orchestration",
