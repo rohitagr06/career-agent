@@ -21,6 +21,7 @@ license: mit
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/rohitagr06/career-agent?style=for-the-badge&color=blueviolet)](https://github.com/rohitagr06/career-agent/releases)
+[![CI](https://github.com/rohitagr06/career-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/rohitagr06/career-agent/actions/workflows/ci.yml)
 
 </div>
 
