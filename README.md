@@ -284,6 +284,7 @@ career-agent/
 │   ├── indexing.py                # Index management
 │   ├── ingest.py                  # Knowledge ingestion pipeline
 │   ├── keyword_search.py          # Keyword retrieval
+│   ├── query_normalizer.py        # Query cleaning and normalization
 │   ├── metadata.py                # Chunk metadata handling
 │   ├── pdf_loader.py              # Resume/document loading
 │   ├── reranker.py                # Cross-encoder reranking
