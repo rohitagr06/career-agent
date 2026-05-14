@@ -10,7 +10,6 @@ PROMPTS_DIR = BASE_DIR / "prompts"
 
 with open(
     PROMPTS_DIR / "system_prompt.txt",
-    "r",
     encoding="utf-8",
 ) as file:
     CAREER_AGENT_INSTRUCTIONS = file.read()
@@ -21,7 +20,6 @@ with open(
 
 with open(
     PROMPTS_DIR / "fallback_prompt.txt",
-    "r",
     encoding="utf-8",
 ) as file:
     FALLBACK_AGENT_INSTRUCTIONS = file.read()

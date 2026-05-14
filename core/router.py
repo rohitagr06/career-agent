@@ -2,10 +2,10 @@ from agents import Runner
 from google.genai import types
 
 from config.logging_config import logger
-from core.models import gemini_client
-from pipeline.instructions import FALLBACK_AGENT_INSTRUCTIONS
-from core.schemas import ChatResponse
 from config.settings import settings
+from core.models import gemini_client
+from core.schemas import ChatResponse
+from pipeline.instructions import FALLBACK_AGENT_INSTRUCTIONS
 
 
 class ModelRouter:
@@ -43,7 +43,8 @@ class ModelRouter:
         # =====================================
         except Exception as github_error:
             logger.warning(
-                f"GitHub model failed. Switching to Gemini fallback. Error: {github_error}"
+                "GitHub model failed. "
+                f"Switching to Gemini fallback. Error: {github_error}"
             )
 
             try:
@@ -69,7 +70,7 @@ class ModelRouter:
                 logger.info("Gemini fallback successful")
 
                 return ChatResponse(
-                    answer=response.text,
+                    answer=response.text or "",
                     model_used=settings.gemini_model,
                     fallback_triggered=True,
                 )

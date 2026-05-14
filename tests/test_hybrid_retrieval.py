@@ -1,3 +1,4 @@
+from core.types import Chunk
 from rag.retriever import Retriever
 
 
@@ -27,7 +28,7 @@ class MockRetriever(Retriever):
 
 class MockVectorStore:
     index = None
-    chunks = []
+    chunks: list[Chunk] = []
 
 
 def test_hybrid_retrieval_returns_results(monkeypatch):

@@ -1,5 +1,7 @@
 from pathlib import Path
+
 import pypdf
+
 from config.logging_config import logger
 
 # =====================================

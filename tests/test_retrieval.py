@@ -1,3 +1,4 @@
+from core.types import Chunk
 from rag.retriever import Retriever
 
 
@@ -13,7 +14,7 @@ class MockVectorStore:
     def __init__(self):
         self.index = MockIndex()
 
-        self.chunks = [
+        self.chunks: list[Chunk] = [
             {
                 "text": "Worked on AWS microservices and backend APIs.",
                 "section": "experience",
@@ -26,10 +27,19 @@ class MockVectorStore:
 
 
 def test_deduplicate_chunks():
-    chunks = [
-        {"text": "python aws"},
-        {"text": "python aws"},
-        {"text": "fastapi docker"},
+    chunks: list[Chunk] = [
+        {
+            "text": "python aws",
+            "section": "skills",
+        },
+        {
+            "text": "python aws",
+            "section": "skills",
+        },
+        {
+            "text": "fastapi docker",
+            "section": "skills",
+        },
     ]
 
     result = Retriever.deduplicate_chunks(chunks)

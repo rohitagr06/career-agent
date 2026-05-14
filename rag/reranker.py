@@ -1,6 +1,7 @@
 from sentence_transformers import util
 
 from config.logging_config import logger
+from core.types import Chunk
 from rag.embeddings import embedding_model
 
 
@@ -12,9 +13,9 @@ class Reranker:
     @staticmethod
     def rerank(
         query: str,
-        chunks: list[dict],
+        chunks: list[Chunk],
         top_k: int = 3,
-    ) -> list[dict]:
+    ) -> list[Chunk]:
 
         logger.info("Starting reranking process")
 
@@ -42,6 +43,7 @@ class Reranker:
             zip(
                 chunks,
                 similarity_scores,
+                strict=False,
             )
         )
 

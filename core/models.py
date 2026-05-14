@@ -1,6 +1,6 @@
-from openai import AsyncOpenAI
 from agents import OpenAIChatCompletionsModel
 from google import genai
+from openai import AsyncOpenAI
 
 from config.settings import settings
 
