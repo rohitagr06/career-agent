@@ -27,13 +27,14 @@ jobs:
 
       - name: Run tests
         run: |
-          TEST_COUNT=$(find tests -name "test_*.py" | wc -l)
+          uv run pytest tests/ -v || EXIT_CODE=$?
 
-          if [ "$TEST_COUNT" -eq 0 ]; then
-            echo "No pytest tests found. Skipping."
-          else
-            uv run pytest tests/ -v
+          if [ "${EXIT_CODE:-0}" -eq 5 ]; then
+            echo "No pytest tests collected. Skipping failure."
+            exit 0
           fi
+          
+          exit ${EXIT_CODE:-0}
 
       - name: Check formatting
         run: uv run black --check .
