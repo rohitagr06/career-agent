@@ -1,14 +1,9 @@
 [project]
-
 name = "career-agent"
-
 version = "0.1.0"
-
 description = "Production-grade AI career conversation agent"
-
 readme = "README.md"
-
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 dependencies = [
     "black[jupyter]>=26.3.1",
@@ -20,22 +15,48 @@ dependencies = [
     "numpy>=2.4.4",
     "openai>=2.36.0",
     "openai-agents>=0.17.2",
-    "pydantic>=2.11.10,<=2.12.5",
-    "pydantic-settings>=2.9.0,<2.14.0",
+    "pydantic>=2.11.10,<3.0.0",
+    "pydantic-settings>=2.9.0,<3.0.0",
     "pypdf>=6.11.0",
-    "pytest>=9.0.3",
     "python-dotenv>=1.2.2",
     "rank-bm25>=0.2.2",
     "sentence-transformers>=5.4.1",
     "tenacity>=9.1.4",
 ]
 
-[tool.pytest.ini_options]
-
-pythonpath = ["."]
-
 [dependency-groups]
 dev = [
+    "mypy>=1.18.2",
+    "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
 ]
+
+[tool.black]
+target-version = ["py312"]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "B",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.12"
+
+disallow_untyped_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_return_any = false
+warn_unused_ignores = true

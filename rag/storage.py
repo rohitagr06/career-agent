@@ -1,8 +1,10 @@
-from pathlib import Path
 import pickle
+from pathlib import Path
 
 import faiss
+
 from config.logging_config import logger
+from core.types import Chunk
 
 # =====================================
 # Paths
@@ -11,11 +13,10 @@ from config.logging_config import logger
 BASE_DIR = Path("data")
 
 INDEX_DIR = BASE_DIR / "indexes"
-PROCESSED_DIR = BASE_DIR / "processed"
 
 FAISS_INDEX_PATH = INDEX_DIR / "faiss.index"
-CHUNKS_PATH = PROCESSED_DIR / "chunks.pkl"
-METADATA_PATH = PROCESSED_DIR / "metadata.pkl"
+CHUNKS_PATH = INDEX_DIR / "chunks.pkl"
+METADATA_PATH = INDEX_DIR / "metadata.pkl"
 
 
 # =====================================
@@ -23,11 +24,6 @@ METADATA_PATH = PROCESSED_DIR / "metadata.pkl"
 # =====================================
 
 INDEX_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
-PROCESSED_DIR.mkdir(
     parents=True,
     exist_ok=True,
 )
@@ -85,7 +81,7 @@ def save_chunks(chunks: list[str]) -> None:
     logger.info(f"Chunks saved at: {CHUNKS_PATH}")
 
 
-def load_chunks() -> list[str]:
+def load_chunks() -> list[Chunk]:
 
     logger.info("Loading document chunks")
 

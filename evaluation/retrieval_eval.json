@@ -1,0 +1,61 @@
+[
+    {
+      "query": "aws experience",
+      "expected_keywords": [
+        "aws",
+        "cloud",
+        "infrastructure"
+      ]
+    },
+    {
+      "query": "fastapi projects",
+      "expected_keywords": [
+        "fastapi",
+        "api",
+        "backend"
+      ]
+    },
+    {
+      "query": "docker experience",
+      "expected_keywords": [
+        "docker",
+        "containers"
+      ]
+    },
+    {
+      "query": "machine learning work",
+      "expected_keywords": [
+        "ml",
+        "machine learning",
+        "ai"
+      ]
+    },
+    {
+        "query": "backend microservices",
+        "expected_keywords": ["python", "microservices", "backend"]
+    },
+    {
+        "query": "kubernetes deployment",
+        "expected_keywords": ["docker", "kubernetes", "deployment"]
+    },
+    {
+        "query": "rest api development",
+        "expected_keywords": ["api", "backend", "fastapi"]
+    },
+    {
+      "query": "python backend systems",
+      "expected_keywords": [
+        "python",
+        "backend",
+        "fastapi"
+      ]
+    },
+    {
+      "query": "cloud deployment",
+      "expected_keywords": [
+        "kubernetes",
+        "cloud",
+        "docker"
+      ]
+    }
+  ]

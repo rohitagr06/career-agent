@@ -1,4 +1,12 @@
+from typing import TypedDict
+
 from config.logging_config import logger
+
+
+class Message(TypedDict):
+    role: str
+    content: str
+
 
 MAX_RECENT_MESSAGES = 6
 MAX_SUMMARY_CHARACTERS = 1500
@@ -11,14 +19,14 @@ class ConversationMemory:
 
     def __init__(self, max_messages: int = 10):
         self.max_messages = max_messages
-        self.messages = []
+        self.messages: list[Message] = []
         self.summary = ""
 
     # =====================================
     # Add User Message
     # =====================================
 
-    def add_user_message(self, message: str):
+    def add_user_message(self, message: str) -> None:
         logger.info("Adding recruiter message to memory")
 
         self.messages.append(
@@ -33,7 +41,7 @@ class ConversationMemory:
     # Add Assistant Message
     # =====================================
 
-    def add_assistant_message(self, message: str):
+    def add_assistant_message(self, message: str) -> None:
         logger.info("Adding assistant response to memory")
         self.messages.append(
             {
@@ -78,7 +86,7 @@ class ConversationMemory:
     # Trim Old Messages
     # =====================================
 
-    def _trim_memory(self):
+    def _trim_memory(self) -> None:
         """
         Keep only recent conversation messages.
         """
@@ -86,7 +94,7 @@ class ConversationMemory:
         if len(self.messages) > self.max_messages:
             self.summarize_old_messages()
 
-    def summarize_old_messages(self):
+    def summarize_old_messages(self) -> None:
         """
         Compress older conversation history.
         """

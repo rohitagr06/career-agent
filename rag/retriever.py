@@ -1,11 +1,19 @@
 from __future__ import annotations
 
-from config.logging_config import logger
+import re
+from typing import TypedDict
 
+from config.logging_config import logger
+from core.types import Chunk, RetrievedChunk
 from rag.embeddings import generate_query_embedding
 from rag.keyword_search import KeywordSearch
 from rag.query_normalizer import normalize_query
 from rag.reranker import Reranker
+
+
+class CombinedScore(TypedDict):
+    chunk: Chunk
+    score: float
 
 
 class Retriever:
@@ -24,7 +32,7 @@ class Retriever:
         self,
         normalized_query: str,
         top_k: int = 5,
-    ) -> list[tuple[dict, float]]:
+    ) -> list[tuple[Chunk, float]]:
         """
         Perform semantic vector search with scores.
         """
@@ -33,18 +41,20 @@ class Retriever:
 
         query_embedding = generate_query_embedding(normalized_query)
 
+        assert self.vector_store.index is not None
         distances, indices = self.vector_store.index.search(
             query_embedding,
             top_k,
         )
 
-        scored_chunks = []
+        scored_chunks: list[tuple[Chunk, float]] = []
 
         MAX_DISTANCE = 2.2
 
         for distance, index in zip(
             distances[0],
             indices[0],
+            strict=False,
         ):
             if index == -1:
                 continue
@@ -75,7 +85,7 @@ class Retriever:
         self,
         normalized_query: str,
         top_k: int = 5,
-    ) -> list[str]:
+    ) -> list[tuple[Chunk, float]]:
         """
         Perform keyword retrieval.
         """
@@ -88,15 +98,15 @@ class Retriever:
 
     @staticmethod
     def deduplicate_chunks(
-        chunks: list[dict],
-    ) -> list[dict]:
+        chunks,
+    ) -> list[RetrievedChunk]:
         """
         Remove duplicate chunks while preserving order.
         """
 
         seen = set()
 
-        unique_chunks = []
+        unique_chunks: list[RetrievedChunk] = []
 
         for chunk in chunks:
             chunk_text = chunk["text"]
@@ -117,7 +127,7 @@ class Retriever:
         keyword_top_k: int = 5,
         final_top_k: int = 3,
         top_k: int | None = None,
-    ) -> list[tuple[str, float]]:
+    ) -> list[RetrievedChunk]:
         """
         Hybrid retrieval pipeline.
         """
@@ -140,14 +150,23 @@ class Retriever:
         # Skill Query Precision Guard
         # =====================================
 
-        query_tokens = query.lower().split()
+        original_query_tokens = re.sub(r"[^\w\s]", " ", query.lower()).split()
 
-        is_short_skill_query = len(query_tokens) <= 3
+        is_short_skill_query = len(original_query_tokens) <= 3
 
         if is_short_skill_query and not keyword_results:
             logger.info(
                 "Short skill query with no keyword hits. Skipping semantic fallback."
             )
+
+            return []
+
+        # =====================================
+        # Empty Query Guard
+        # =====================================
+
+        if not normalized_query.strip():
+            logger.warning("Empty normalized query")
 
             return []
 
@@ -164,7 +183,7 @@ class Retriever:
         # Weighted Hybrid Fusion
         # =====================================
 
-        combined_scores = {}
+        combined_scores: dict[str, CombinedScore] = {}
 
         SEMANTIC_WEIGHT = 0.7
         KEYWORD_WEIGHT = 0.3
@@ -197,7 +216,7 @@ class Retriever:
         # Sort By Final Score
         # =====================================
 
-        sorted_chunks = sorted(
+        sorted_chunks: list[tuple[Chunk, float]] = sorted(
             [(value["chunk"], value["score"]) for value in combined_scores.values()],
             key=lambda x: x[1],
             reverse=True,
@@ -205,13 +224,13 @@ class Retriever:
 
         MIN_RETRIEVAL_SCORE = 0.25
 
-        filtered_chunks = [
+        filtered_chunks: list[tuple[Chunk, float]] = [
             (chunk, score)
             for chunk, score in sorted_chunks
             if score >= MIN_RETRIEVAL_SCORE
         ]
 
-        unique_chunks = [chunk for chunk, score in filtered_chunks]
+        unique_chunks: list[Chunk] = [chunk for chunk, score in filtered_chunks]
         logger.info(f"Filtered chunk count: {len(unique_chunks)}")
 
         for rank, (chunk, score) in enumerate(
@@ -242,4 +261,15 @@ class Retriever:
 
         logger.info(f"Final retrieved chunks: {len(reranked_chunks)}")
 
-        return reranked_chunks
+        final_results: list[RetrievedChunk] = []
+
+        for chunk in reranked_chunks:
+            final_results.append(
+                {
+                    "text": chunk["text"],
+                    "section": chunk["section"],
+                    "score": 1.0,
+                }
+            )
+
+        return final_results

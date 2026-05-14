@@ -2,6 +2,7 @@ import faiss
 import numpy as np
 
 from config.logging_config import logger
+from core.types import Chunk
 from rag.storage import (
     load_chunks,
     load_faiss_index,
@@ -30,7 +31,7 @@ class FAISSStore:
     def build_index(
         self,
         embeddings: np.ndarray,
-        chunks: list[str],
+        chunks: list[Chunk],
         metadata: list[dict] | None = None,
     ) -> None:
 

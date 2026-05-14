@@ -505,10 +505,10 @@ A typed `AgentResponse` object lets the UI render follow-up question chips, trig
 
 ## Known Limitations
 
-- Responses are intentionally restricted to uploaded professional documents — the assistant will not speculate or invent experience
+- Responses are strictly grounded in uploaded professional documents — the assistant will not speculate or invent experience
 - Free-tier Hugging Face Spaces may experience cold starts of ~30 seconds after periods of inactivity
-- Real-time internet search is disabled to preserve factual grounding
-- Optimised for recruiter-style conversations — not a general-purpose assistant
+- Real-time web search is intentionally disabled to maintain retrieval accuracy and grounding
+- The assistant is optimized for recruiter and career-related conversations, not general-purpose chat
 - FAISS index must be rebuilt manually whenever source documents change
 
 ---

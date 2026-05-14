@@ -19,9 +19,11 @@ venv/
 data/indexes/faiss.index
 data/processed/chunks.pkl
 data/processed/metadata.pkl
+data/
 Readme_ori.md
 *.pdf
 data/summary.txt
+faiss_store/
 
 # local binaries
 *.so

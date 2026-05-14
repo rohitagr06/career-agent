@@ -1,8 +1,9 @@
+from core.types import Chunk
 from rag.retriever import Retriever
 
 
 def test_deduplicate_chunks():
-    chunks = [
+    chunks: list[Chunk] = [
         {
             "text": "python aws",
             "section": "experience",

@@ -1,3 +1,4 @@
+from core.types import Chunk
 from rag.retriever import Retriever
 
 
@@ -10,12 +11,14 @@ def test_chunk_text_slicing_regression():
     Attempted slicing directly on dict instead of dict["text"].
     """
 
-    chunk = {
-        "text": "AWS microservices backend systems",
-        "section": "experience",
-    }
+    chunk: list[Chunk] = [
+        {
+            "text": "AWS microservices backend systems",
+            "section": "experience",
+        }
+    ]
 
-    preview = chunk["text"][:300]
+    preview = chunk[0]["text"][:300]
 
     assert isinstance(preview, str)
 
@@ -29,7 +32,7 @@ def test_join_dict_regression():
     Attempted join() directly on dictionaries.
     """
 
-    chunks = [
+    chunks: list[Chunk] = [
         {
             "text": "AWS backend systems",
             "section": "experience",
@@ -56,10 +59,10 @@ def test_deduplicate_dict_regression():
     Using dictionaries as set/dict keys.
     """
 
-    chunks = [
-        {"text": "python aws"},
-        {"text": "python aws"},
-        {"text": "docker kubernetes"},
+    chunks: list[Chunk] = [
+        {"text": "python aws", "section": "skills"},
+        {"text": "python aws", "section": "skills"},
+        {"text": "docker kubernetes", "section": "skills"},
     ]
 
     deduplicated = Retriever.deduplicate_chunks(chunks)
@@ -110,16 +113,18 @@ def test_chunk_structure_contract():
     Ensure every chunk follows expected schema.
     """
 
-    chunk = {
-        "text": "Built scalable APIs",
-        "section": "experience",
-    }
+    chunk: list[Chunk] = [
+        {
+            "text": "Built scalable APIs",
+            "section": "experience",
+        }
+    ]
 
-    assert "text" in chunk
-    assert "section" in chunk
+    assert "text" in chunk[0]
+    assert "section" in chunk[0]
 
-    assert isinstance(chunk["text"], str)
-    assert isinstance(chunk["section"], str)
+    assert isinstance(chunk[0]["text"], str)
+    assert isinstance(chunk[0]["section"], str)
 
 
 def test_short_skill_query_guard_regression(monkeypatch):

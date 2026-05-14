@@ -1,5 +1,3 @@
-from typing import List
-
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
@@ -47,7 +45,7 @@ def generate_query_embedding(
 
 
 def generate_document_embeddings(
-    chunks: List[str],
+    chunks: list[str],
 ) -> np.ndarray:
     """
     Generate embeddings for chunks.

@@ -16,10 +16,27 @@ TECH_ALIASES = {
     "db": "database postgres sql",
     "ui": "user interface frontend",
     "kafka": "kafka distributed event streaming messaging",
-    "microservices": ("microservices distributed systems backend architecture"),
-    "testing": ("testing unit tests integration tests pact tests"),
-    "architecture": ("software architecture backend system design"),
-    "backend": ("backend engineering distributed systems microservices"),
+    "fastapi": "fastapi python backend rest api microservices",
+    "rag": "retrieval augmented generation vector search embeddings llm",
+    "faiss": "faiss vector database semantic search embeddings",
+    "vector": "vector database embeddings semantic retrieval",
+    "deployment": "deployment cloud docker kubernetes infrastructure",
+    "cloud": "cloud aws infrastructure deployment kubernetes",
+    "docker": "docker containers kubernetes deployment",
+    "embeddings": "vector embeddings semantic search retrieval",
+    "microservices": "microservices distributed systems backend architecture",
+    "testing": "testing unit tests integration tests pact tests",
+    "architecture": "software architecture backend system design",
+    "backend": "backend engineering distributed systems microservices",
+    # multi-word aliases
+    "cloud deployment": "aws kubernetes docker cloud infrastructure deployment",
+    "machine learning": "machine learning ai ml",
+    "rest api": "rest api graphql api backend service",
+    "post graduation": "post graduate diploma data science masters education",
+    "data science": "analytics machine learning predictive analytics",
+    "predictive analytics": "machine learning analytics",
+    "diploma": "pgdds post graduate diploma",
+    "pgdds": "post graduate diploma data science",
 }
 
 
@@ -30,19 +47,35 @@ def normalize_query(query: str) -> str:
 
     query = query.lower().strip()
 
-    # Remove excessive punctuation
     query = re.sub(r"[^\w\s]", " ", query)
-
-    # Normalize whitespace
     query = re.sub(r"\s+", " ", query).strip()
 
-    words = query.split()
+    # =====================================
+    # Multi-word replacements FIRST
+    # =====================================
 
-    expanded_words = []
+    normalized_query = query
 
-    for word in words:
-        expanded_words.append(TECH_ALIASES.get(word, word))
+    # longest phrases first
+    sorted_aliases = sorted(
+        TECH_ALIASES.items(),
+        key=lambda x: len(x[0]),
+        reverse=True,
+    )
 
-    normalized_query = " ".join(expanded_words)
+    for alias, expansion in sorted_aliases:
+        pattern = rf"\b{re.escape(alias)}\b"
+
+        normalized_query = re.sub(
+            pattern,
+            expansion,
+            normalized_query,
+        )
+
+    normalized_query = re.sub(
+        r"\s+",
+        " ",
+        normalized_query,
+    ).strip()
 
     return normalized_query

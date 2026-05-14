@@ -1,12 +1,14 @@
 import re
 
 from config.logging_config import logger
+from core.types import Chunk
 
 # =====================================
 # Chunk Filtering Rules
 # =====================================
 
-MIN_CHUNK_LENGTH = 120
+
+MIN_CHUNK_LENGTH = 40
 
 NOISE_PATTERNS = [
     "linkedin",
@@ -44,6 +46,11 @@ def split_sections(
         r"(?=skills)",
         r"(?=education)",
         r"(?=certifications)",
+        r"(?=professional summary)",
+        r"(?=work experience)",
+        r"(?=technical skills)",
+        r"(?=achievements)",
+        r"(?=patents)",
     ]
 
     combined_pattern = "|".join(patterns)
@@ -93,7 +100,7 @@ def split_large_section(
 
     chunks = []
 
-    current_chunk = []
+    current_chunk: list[str] = []
     current_length = 0
 
     for sentence in sentences:
@@ -149,7 +156,7 @@ def detect_section_name(section: str) -> str:
     return "general"
 
 
-def chunk_text(text: str) -> list[str]:
+def chunk_text(text: str) -> list[Chunk]:
     """
     Production-style semantic chunking.
     """
@@ -160,7 +167,7 @@ def chunk_text(text: str) -> list[str]:
 
     sections = split_sections(cleaned_text)
 
-    final_chunks = []
+    final_chunks: list[Chunk] = []
 
     for section in sections:
         section_chunks = split_large_section(section)
@@ -179,17 +186,17 @@ def chunk_text(text: str) -> list[str]:
             # Skip Noisy Chunks
             # =====================================
 
-            if any(noise in clean_chunk.lower() for noise in NOISE_PATTERNS):
-                continue
+            # if any(noise in clean_chunk.lower() for noise in NOISE_PATTERNS):
+            #     continue
 
             section_name = detect_section_name(section)
 
-            final_chunks.append(
-                {
-                    "text": clean_chunk,
-                    "section": section_name,
-                }
-            )
+            chunk_final: Chunk = {
+                "text": clean_chunk,
+                "section": section_name,
+            }
+
+            final_chunks.append(chunk_final)
 
     # =====================================
     # Final Noise Cleanup
@@ -203,8 +210,8 @@ def chunk_text(text: str) -> list[str]:
 
 
 def remove_noisy_chunks(
-    chunks: list[dict],
-) -> list[dict]:
+    chunks: list[Chunk],
+) -> list[Chunk]:
     """
     Remove low-value chunks.
     """
@@ -214,8 +221,6 @@ def remove_noisy_chunks(
         "hobbies",
         "languages",
         "mobile",
-        "linkedin",
-        "email",
         "page 1 of",
         "page 2 of",
         "page 3 of",
@@ -226,19 +231,16 @@ def remove_noisy_chunks(
         "2008",
         "intermediate",
         "h.s. school",
-        "rohit agrawal",
-        "hyderabad, telangana",
-        "senior software engineer at",
         "madhya pradesh",
     ]
 
-    filtered_chunks = []
+    filtered_chunks: list[Chunk] = []
 
     for chunk in chunks:
         text = chunk["text"]
         normalized = text.lower()
         word_count = len(text.split())
-        if word_count < 25:
+        if word_count < 5:
             continue
 
         if any(term in normalized for term in blocked_terms):

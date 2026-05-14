@@ -5,6 +5,7 @@ import re
 from rank_bm25 import BM25Okapi
 
 from config.logging_config import logger
+from core.types import Chunk
 
 
 class KeywordSearch:
@@ -27,9 +28,9 @@ class KeywordSearch:
     def search(
         cls,
         query: str,
-        chunks: list[dict],
+        chunks: list[Chunk],
         top_k: int = 5,
-    ) -> list[tuple[dict, float]]:
+    ) -> list[tuple[Chunk, float]]:
         """
         BM25 keyword retrieval.
         """
@@ -52,10 +53,11 @@ class KeywordSearch:
 
         scores = bm25.get_scores(tokenized_query)
 
-        scored_chunks = list(
+        scored_chunks: list[tuple[Chunk, float]] = list(
             zip(
                 chunks,
                 scores,
+                strict=False,
             )
         )
 
@@ -69,7 +71,8 @@ class KeywordSearch:
         ]
 
         logger.info(
-            f"Keyword retrieval completed. Retrieved {len(filtered_chunks[:top_k])} chunks"
+            "Keyword retrieval completed. "
+            f"Retrieved {len(filtered_chunks[:top_k])} chunks"
         )
 
         return filtered_chunks[:top_k]

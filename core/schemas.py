@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 
 # =====================================
 # Chat Request Schema
@@ -65,7 +64,7 @@ class RetrievalChunk(BaseModel):
         description="Document source",
     )
 
-    score: Optional[float] = Field(
+    score: float | None = Field(
         default=None,
         description="Retrieval similarity score",
     )
