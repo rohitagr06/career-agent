@@ -12,14 +12,16 @@ class Reranker:
     @staticmethod
     def rerank(
         query: str,
-        chunks: list[str],
+        chunks: list[dict],
         top_k: int = 3,
-    ) -> list[str]:
+    ) -> list[dict]:
 
         logger.info("Starting reranking process")
 
         if not chunks:
             return []
+
+        chunk_texts = [chunk["text"] for chunk in chunks]
 
         query_embedding = embedding_model.encode(
             query,
@@ -27,7 +29,7 @@ class Reranker:
         )
 
         chunk_embeddings = embedding_model.encode(
-            chunks,
+            chunk_texts,
             convert_to_tensor=True,
         )
 
@@ -36,7 +38,12 @@ class Reranker:
             chunk_embeddings,
         )[0]
 
-        scored_chunks = list(zip(chunks, similarity_scores))
+        scored_chunks = list(
+            zip(
+                chunks,
+                similarity_scores,
+            )
+        )
 
         scored_chunks.sort(
             key=lambda x: x[1],

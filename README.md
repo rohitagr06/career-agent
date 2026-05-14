@@ -1,5 +1,6 @@
 ---
 title: Virtual Rohit — AI Career Conversation Agent
+emoji: 🤖
 colorFrom: indigo
 colorTo: teal
 sdk: gradio
@@ -83,7 +84,7 @@ Embeddings are generated offline and stored in a persistent FAISS index. This en
 
 ### 🔄 Multi-Model Resilience
 Uses a robust failover strategy:
-1. **Primary:** GitHub Models (GPT-4o-mini).
+1. **Primary:** GitHub Models (GPT-4.1-mini).
 2. **Secondary (Fallback):** Google Gemini Flash.
 3. **Tertiary:** Polite static failure message.
 
@@ -230,10 +231,11 @@ All tuneable parameters (history limit, chunk size, retry counts, model names, t
 | **LLM (primary)** | GitHub Models — GPT-4.1-mini (free) |
 | **LLM (fallback)** | Google Gemini 2.5 Flash (free) |
 | **LLM SDK** | OpenAI Python SDK (OpenAI-compatible interface) |
-| **RAG** | FAISS, Sentence Transformers, Hybrid Retrieval |
-| **Structured Response** | Pydantic validation |
-| **Validation** | schema-safe output |
+| **RAG** | FAISS, Sentence Transformers, Hybrid Retrieval, Cross-Encoder Reranker |
+| **Structured output** | Pydantic v2 (`AgentResponse` schema) |
+| **Input validation** | Custom validator (`core/validator.py`) |
 | **Notifications** | Pushover API |
+| **Dependency management** | uv + pyproject.toml |
 | **Deployment** | Hugging Face Spaces |
 | **Language** | Python 3.11+ |
 
@@ -371,7 +373,17 @@ PUSHOVER_TOKEN=your_pushover_app_token
 PUSHOVER_USER=your_pushover_user_key
 ```
 
-### 5. Run the application
+### 5. Build the FAISS index
+
+This is a one-time step that loads your documents, generates embeddings, and saves the persistent FAISS index to `data/indexes/faiss.index`.
+
+```bash
+python scripts/build_index.py
+```
+
+> **Note:** You only need to run this once. On subsequent startups, the app loads the pre-built index directly — no rebuild required.
+
+### 6. Run the application
 
 ```bash
 python app.py
@@ -412,6 +424,7 @@ This project is designed for zero-config deployment on Hugging Face Spaces.
 4. The Space will build automatically from `app.py`
 
 Designed for lightweight deployment on Hugging Face Spaces with minimal operational overhead.
+
 ---
 
 ## Running Tests
@@ -422,8 +435,10 @@ python -m pytest tests/ -v
 
 # Run individual test files
 python -m pytest tests/test_validator.py -v
-python -m pytest tests/test_retriever.py -v
-python -m pytest tests/test_agent.py -v
+python -m pytest tests/test_retrieval.py -v
+python -m pytest tests/test_memory.py -v
+python -m pytest tests/test_models.py -v
+python -m pytest tests/recruiter_questions.py -v
 ```
 
 ---

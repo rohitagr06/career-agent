@@ -60,7 +60,13 @@ def build_index() -> None:
     # Inject Safe Contact Chunk
     # =====================================
 
-    chunks.insert(0, SAFE_CONTACT_CHUNK.strip())
+    chunks.insert(
+        0,
+        {
+            "text": SAFE_CONTACT_CHUNK.strip(),
+            "section": "contact",
+        },
+    )
 
     logger.info("Injected safe contact information chunk")
 
@@ -68,7 +74,7 @@ def build_index() -> None:
     # Remove Empty Chunks
     # =====================================
 
-    chunks = [chunk.strip() for chunk in chunks if chunk and chunk.strip()]
+    chunks = [chunk for chunk in chunks if chunk and chunk["text"].strip()]
 
     logger.info(f"Final chunk count: {len(chunks)}")
 
@@ -78,7 +84,7 @@ def build_index() -> None:
 
     logger.info("Generating embeddings")
 
-    embeddings = generate_document_embeddings(chunks)
+    embeddings = generate_document_embeddings([chunk["text"] for chunk in chunks])
 
     logger.info("Embeddings generated successfully")
 

@@ -9,8 +9,6 @@ from core.validator import RequestValidator
 from pipeline.instructions import CAREER_AGENT_INSTRUCTIONS
 from pipeline.memory import ConversationMemory
 from rag.faiss_store import FAISSStore
-from rag.keyword_search import KeywordSearch
-from rag.reranker import Reranker
 from rag.retriever import Retriever
 from rag.storage import index_exists
 
@@ -118,84 +116,40 @@ class CareerPipeline:
             logger.info("Contact-related query detected")
 
         # =====================================
-        # Semantic Retrieval
+        # Hybrid Retrieval
         # =====================================
 
         if is_contact_query:
-            semantic_chunks = CareerPipeline.retriever.retrieve(
+            retrieved_chunks = CareerPipeline.retriever.retrieve(
                 query="professional email linkedin contact information",
-                top_k=10,
+                semantic_top_k=10,
+                keyword_top_k=10,
+                final_top_k=10,
             )
 
         else:
-            semantic_chunks = CareerPipeline.retriever.retrieve(
+            retrieved_chunks = CareerPipeline.retriever.retrieve(
                 query=request.message,
-                top_k=5,
+                semantic_top_k=5,
+                keyword_top_k=5,
+                final_top_k=3,
             )
-
-        # =====================================
-        # Keyword Retrieval
-        # =====================================
-
-        if is_contact_query:
-            keyword_chunks = KeywordSearch.search(
-                query="email linkedin contact",
-                chunks=CareerPipeline.chunks,
-                top_k=10,
-            )
-
-        else:
-            keyword_chunks = KeywordSearch.search(
-                query=request.message,
-                chunks=CareerPipeline.chunks,
-                top_k=5,
-            )
-
-        # =====================================
-        # Hybrid Merge
-        # =====================================
-
-        candidate_chunks = list(dict.fromkeys(semantic_chunks + keyword_chunks))
-
-        logger.info(f"Retrieved candidate chunks: {len(candidate_chunks)}")
-
-        for index, chunk in enumerate(
-            candidate_chunks,
-            start=1,
-        ):
-            logger.info(f"[Candidate Chunk {index}] {chunk[:300]}")
-
-        # =====================================
-        # Reranking
-        # =====================================
-
-        if is_contact_query:
-            logger.info("Skipping reranking for contact query")
-            retrieved_chunks = candidate_chunks[:10]
-        else:
-            retrieved_chunks = Reranker.rerank(
-                query=request.message,
-                chunks=candidate_chunks,
-                top_k=3,
-            )
-
-        logger.info("Final reranked chunks")
-
-        for index, chunk in enumerate(
-            retrieved_chunks,
-            start=1,
-        ):
-            logger.info(f"[Final Chunk {index}] {chunk[:300]}")
 
         logger.info(
             f"Hybrid retrieval completed. Total chunks: {len(retrieved_chunks)}"
         )
 
+        for index, chunk in enumerate(
+            retrieved_chunks,
+            start=1,
+        ):
+            logger.info(f"[Final Chunk {index}] {chunk['text'][:300]}")
+
         # =====================================
         # Build Context
         # =====================================
 
-        context = "\n\n".join(retrieved_chunks)
+        context = "\n\n".join(chunk["text"] for chunk in retrieved_chunks)
 
         # =====================================
         # Conversation Memory
@@ -207,18 +161,20 @@ class CareerPipeline:
         # Grounded Prompt
         # =====================================
         grounded_prompt = f"""
-        Use the following recruiter conversation history and
-        retrieved professional information to answer naturally
-        as Virtual Rohit.
+        You are Virtual Rohit.
 
-        Only answer using retrieved information.
+        Answer recruiter questions ONLY using the retrieved information.
 
-        If information is unavailable:
+        STRICT RULES:
 
-        * say so naturally
-        * do not hallucinate
-        * do not invent experience
-        * do not fabricate technologies
+        1. Never assume missing experience.
+        2. Never infer that Rohit lacks a skill unless explicitly stated.
+        3. If the retrieved context does not mention a technology,
+        say:
+        "I could not find that technology mentioned in the available experience data."
+        4. Do not invent projects, tools, responsibilities, or expertise.
+        5. Keep answers concise and recruiter-friendly.
+        6. Prefer exact wording from retrieved chunks.
 
         ==================================================
         CONVERSATION HISTORY

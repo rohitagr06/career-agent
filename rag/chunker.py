@@ -71,19 +71,19 @@ def sentence_split(
     text: str,
 ) -> list[str]:
     """
-    Split text into sentences.
+    Split text into sentences and resume bullets.
     """
 
     return re.split(
-        r"(?<=[.!?])\s+",
+        r"(?<=[.!?])\s+|\n+|(?=•)",
         text,
     )
 
 
 def split_large_section(
     section: str,
-    chunk_size: int = 700,
-    overlap: int = 2,
+    chunk_size: int = 350,
+    overlap: int = 1,
 ) -> list[str]:
     """
     Sentence-aware chunking.
@@ -124,6 +124,31 @@ def split_large_section(
     return chunks
 
 
+def detect_section_name(section: str) -> str:
+    """
+    Detect resume section type.
+    """
+
+    section_lower = section.lower()
+
+    if "experience" in section_lower:
+        return "experience"
+
+    if "project" in section_lower:
+        return "projects"
+
+    if "skill" in section_lower:
+        return "skills"
+
+    if "certification" in section_lower:
+        return "certifications"
+
+    if "education" in section_lower:
+        return "education"
+
+    return "general"
+
+
 def chunk_text(text: str) -> list[str]:
     """
     Production-style semantic chunking.
@@ -157,7 +182,14 @@ def chunk_text(text: str) -> list[str]:
             if any(noise in clean_chunk.lower() for noise in NOISE_PATTERNS):
                 continue
 
-            final_chunks.append(clean_chunk)
+            section_name = detect_section_name(section)
+
+            final_chunks.append(
+                {
+                    "text": clean_chunk,
+                    "section": section_name,
+                }
+            )
 
     # =====================================
     # Final Noise Cleanup
@@ -171,8 +203,8 @@ def chunk_text(text: str) -> list[str]:
 
 
 def remove_noisy_chunks(
-    chunks: list[str],
-) -> list[str]:
+    chunks: list[dict],
+) -> list[dict]:
     """
     Remove low-value chunks.
     """
@@ -194,12 +226,20 @@ def remove_noisy_chunks(
         "2008",
         "intermediate",
         "h.s. school",
+        "rohit agrawal",
+        "hyderabad, telangana",
+        "senior software engineer at",
+        "madhya pradesh",
     ]
 
     filtered_chunks = []
 
     for chunk in chunks:
-        normalized = chunk.lower()
+        text = chunk["text"]
+        normalized = text.lower()
+        word_count = len(text.split())
+        if word_count < 25:
+            continue
 
         if any(term in normalized for term in blocked_terms):
             continue

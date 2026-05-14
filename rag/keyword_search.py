@@ -1,37 +1,67 @@
+from __future__ import annotations
+
+import re
+
+from rank_bm25 import BM25Okapi
+
 from config.logging_config import logger
 
 
 class KeywordSearch:
-    """
-    Simple keyword-based retrieval.
-    """
-
     @staticmethod
-    def search(
-        query: str,
-        chunks: list[str],
-        top_k: int = 3,
+    def tokenize(
+        text: str,
     ) -> list[str]:
+
+        text = text.lower()
+
+        text = re.sub(
+            r"[^a-z0-9\s]",
+            " ",
+            text,
+        )
+
+        return text.split()
+
+    @classmethod
+    def search(
+        cls,
+        query: str,
+        chunks: list[dict],
+        top_k: int = 5,
+    ) -> list[tuple[dict, float]]:
+        """
+        BM25 keyword retrieval.
+        """
 
         logger.info("Starting keyword retrieval")
 
-        query_words = query.lower().split()
+        tokenized_chunks = [cls.tokenize(chunk["text"]) for chunk in chunks]
 
-        scored_chunks = []
+        bm25 = BM25Okapi(tokenized_chunks)
 
-        for chunk in chunks:
-            chunk_lower = chunk.lower()
-            score = sum(1 for word in query_words if word in chunk_lower)
+        tokenized_query = cls.tokenize(query)
 
-            scored_chunks.append((chunk, score))
+        scores = bm25.get_scores(tokenized_query)
+
+        scored_chunks = list(
+            zip(
+                chunks,
+                scores,
+            )
+        )
 
         scored_chunks.sort(
             key=lambda x: x[1],
             reverse=True,
         )
 
-        top_chunks = [chunk for chunk, score in scored_chunks if score > 0][:top_k]
+        filtered_chunks = [
+            (chunk, float(score)) for chunk, score in scored_chunks if score > 0
+        ]
 
-        logger.info(f"Keyword retrieval completed. Retrieved {len(top_chunks)} chunks")
+        logger.info(
+            f"Keyword retrieval completed. Retrieved {len(filtered_chunks[:top_k])} chunks"
+        )
 
-        return top_chunks
+        return filtered_chunks[:top_k]

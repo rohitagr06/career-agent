@@ -12,7 +12,7 @@ class VectorStore:
 
     def __init__(self):
         self.index = None
-        self.chunks = []
+        self.chunks: List[dict] = []
 
     # =====================================
     # Build Vector Index
@@ -21,7 +21,7 @@ class VectorStore:
     def build_index(
         self,
         embeddings: np.ndarray,
-        chunks: List[str],
+        chunks: List[dict],
     ) -> None:
         """
         Build FAISS vector index.
@@ -43,7 +43,7 @@ class VectorStore:
         self,
         query_embedding: np.ndarray,
         top_k: int = 3,
-    ) -> List[str]:
+    ) -> List[dict]:
         """
         Search most relevant chunks.
         """
