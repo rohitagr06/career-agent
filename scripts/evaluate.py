@@ -12,7 +12,6 @@ if str(ROOT_DIR) not in sys.path:
 from pipeline.career_pipeline import CareerPipeline
 from tests.recruiter_questions import RECRUITER_QUESTIONS
 
-
 # =====================================
 # Evaluation Settings
 # =====================================

@@ -53,11 +53,9 @@ EXAMPLE_QUESTIONS = [
 # =====================================
 
 with gr.Blocks(title="Rohit AI Career Agent") as app:
-    gr.Markdown(
-        """
+    gr.Markdown("""
 Welcome to Rohit's AI-powered career conversation assistant.
-"""
-    )
+""")
     gr.ChatInterface(
         fn=chat_handler,
         examples=EXAMPLE_QUESTIONS,
