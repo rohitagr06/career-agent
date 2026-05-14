@@ -36,7 +36,15 @@ class KeywordSearch:
 
         logger.info("Starting keyword retrieval")
 
+        if not chunks:
+            logger.warning("No chunks available for keyword retrieval")
+            return []
+
         tokenized_chunks = [cls.tokenize(chunk["text"]) for chunk in chunks]
+
+        if not tokenized_chunks:
+            logger.warning("Tokenized chunks are empty")
+            return []
 
         bm25 = BM25Okapi(tokenized_chunks)
 

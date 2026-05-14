@@ -32,3 +32,7 @@ data/summary.txt
 
 # logs
 *.log
+
+.coverage
+htmlcov/
+.pytest_cache/
